@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 import plotly.express as px
 from streamlit_option_menu import option_menu
+BACKEND_URL = os.getenv("BACKEND_API_URL", "https://economy-wvcc.onrender.com ")
 
 # Set page config
 st.set_page_config(page_title="Islamic Digital Economy and Digital Economy Dashboard", layout="wide")
@@ -79,11 +80,16 @@ apply_custom_theme()
 
 # Check backend health
 def check_backend():
-    try:
-        response = requests.get("http://backend:8000/health", timeout=5)
-        return response.status_code == 200
-    except:
-        return False
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            if response.status_code == 200:
+                return True
+        except requests.exceptions.RequestException:
+            if i < max_retries - 1:
+                time.sleep(5)  # Wait before retrying
+    return False
 
 if not check_backend():
     st.error("⚠️ Backend service not available. Please check if the backend container is running.")
@@ -95,7 +101,7 @@ st.sidebar.markdown("## 🌍 Filters")
 
 # Country selector
 try:
-    response = requests.get("http://backend:8000/query/halal_ecommerce")
+    response = requests.get(f"{BACKEND_URL}/query/halal_ecommerce")
     countries = list(set(row["country"] for row in response.json())) if response.status_code == 200 else ["Malaysia", "Indonesia", "Saudi Arabia"]
 except:
     countries = ["Malaysia", "Indonesia", "Saudi Arabia"]
@@ -123,7 +129,7 @@ if selected == "Halal E-commerce":
     
     # Revenue comparison
     rev_response = requests.get(
-        "http://backend:8000/aggregation/halal_ecommerce",
+        f"{BACKEND_URL}/aggregation/halal_ecommerce",
         params={"metric": "revenue_usd", "group_by": "country"}
     )
     
@@ -146,7 +152,7 @@ if selected == "Halal E-commerce":
 
     # Growth rate trend
     trend_response = requests.get(
-        "http://backend:8000/query/halal_ecommerce",
+        f"{BACKEND_URL}/query/halal_ecommerce",
         params={"countries": selected_countries}
     )
     
@@ -176,7 +182,7 @@ elif selected == "ICT & Fintech":
     
     with col1:
         # ICT Services
-        ict_response = requests.get("http://backend:8000/aggregation/ict_services", 
+        ict_response = requests.get(f"{BACKEND_URL}/aggregation/ict_services", 
                                   params={"metric": "gross_output", "group_by": "country"})
         ict_data = ict_response.json()
         ict_df = pd.DataFrame([ict_data] if isinstance(ict_data, dict) else ict_data)
@@ -190,7 +196,7 @@ elif selected == "ICT & Fintech":
 
     with col2:
         # Internet Penetration
-        penetration_response = requests.get("http://backend:8000/query/internet_penetration")
+        penetration_response = requests.get(f"{BACKEND_URL}/query/internet_penetration")
         penetration_data = penetration_response.json()
         penetration_df = pd.DataFrame([penetration_data] if isinstance(penetration_data, dict) else penetration_data)
         
@@ -208,7 +214,7 @@ elif selected == "ICT & Fintech":
             st.plotly_chart(penetration_fig, use_container_width=True)
 
     # Fintech metrics
-    fintech_response = requests.get("http://backend:8000/query/islamic_fintech")
+    fintech_response = requests.get(f"{BACKEND_URL}/query/islamic_fintech")
     fintech_data = fintech_response.json()
     fintech_df = pd.DataFrame([fintech_data] if isinstance(fintech_data, dict) else fintech_data)
     
@@ -242,7 +248,7 @@ elif selected == "AI Insights":
     user_query = st.text_input("Ask a question about the data")
     
     if st.button("Get AI Analysis"):
-        ai_response = requests.post("http://backend:8000/ai_query", 
+        ai_response = requests.post(f"{BACKEND_URL}/ai_query", 
                                   json={"question": user_query})
         
         if ai_response.status_code == 200:
@@ -267,7 +273,7 @@ elif selected == "Data Explorer":
     selected_table = st.selectbox("Select Dataset", tables)
     
     if st.button("Load Data"):
-        response = requests.get(f"http://backend:8000/query/{selected_table}")
+        response = requests.get(f"{BACKEND_URL}/query/{selected_table}")
         df = pd.DataFrame(response.json() if response.status_code == 200 else [])
         st.dataframe(df)
         
@@ -279,22 +285,22 @@ st.markdown("## 📈 Key Metrics")
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    response = requests.get("http://backend:8000/summary/halal_ecommerce")
+    response = requests.get(f"{BACKEND_URL}/summary/halal_ecommerce")
     data = response.json() if response.status_code == 200 else {"count": 0, "avg_growth_rate": 0}
     st.metric("Total Halal Revenue", f"${data.get('count', 0) * 1000000:,.0f} USD")
 
 with col2:
-    response = requests.get("http://backend:8000/summary/islamic_fintech")
+    response = requests.get(f"{BACKEND_URL}/summary/islamic_fintech")
     data = response.json() if response.status_code == 200 else {"count": 0}
     st.metric("Total Fintech Transactions", f"${data.get('count', 0) * 1000000:,.0f} USD")
 
 with col3:
-    response = requests.get("http://backend:8000/summary/ict_services")
+    response = requests.get(f"{BACKEND_URL}/summary/ict_services")
     data = response.json() if response.status_code == 200 else {"count": 0}
     st.metric("Total ICT Output", f"${data.get('count', 0) * 1000000:,.0f} USD")
 
 with col4:
-    response = requests.get("http://backend:8000/summary/household_ict")
+    response = requests.get(f"{BACKEND_URL}/summary/household_ict")
     data = response.json() if response.status_code == 200 else {"avg_growth_rate": 75.4}
     st.metric("Average Internet Usage", f"{data.get('avg_growth_rate', 75.4):.1f}%")
 
@@ -307,7 +313,7 @@ all_tables = [
 selected_report = st.sidebar.selectbox("Select Report", all_tables)
 
 if st.sidebar.button("Generate Report"):
-    response = requests.get(f"http://backend:8000/download/{selected_report}")
+    response = requests.get(f"{BACKEND_URL}/download/{selected_report}")
     st.sidebar.download_button(
         label="Download CSV",
         data=response.content,
@@ -325,7 +331,7 @@ if country_profile:
     with col1:
         st.markdown(f"### {country_profile} - Halal E-commerce")
         response = requests.get(
-            "http://backend:8000/query/halal_ecommerce",
+            "{BACKEND_URL}/query/halal_ecommerce",
             params={"countries": [country_profile]}
         )
         df = pd.DataFrame(response.json() if response.status_code == 200 else [])
@@ -334,7 +340,7 @@ if country_profile:
     with col2:
         st.markdown(f"### {country_profile} - Fintech")
         fintech_response = requests.get(
-            "http://backend:8000/query/islamic_fintech",
+            "{BACKEND_URL}/query/islamic_fintech",
             params={"countries": [country_profile]}
         )
         fintech_df = pd.DataFrame(fintech_response.json() if fintech_response.status_code == 200 else [])
@@ -356,7 +362,7 @@ country_totals = {}
 # Iterate over each metric
 for label, endpoint in metrics.items():
     try:
-        response = requests.get(f"http://backend:8000/aggregation/{endpoint}", params={"metric": "count", "group_by": "country"})
+        response = requests.get(f"{BACKEND_URL}/aggregation/{endpoint}", params={"metric": "count", "group_by": "country"})
         data = response.json()
         df = pd.DataFrame(data if isinstance(data, list) else [data])
         
