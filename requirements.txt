@@ -1,0 +1,6 @@
+# frontend/requirements.txt
+streamlit>=1.22
+pandas>=2.0
+requests>=2.30
+plotly>=5.13
+streamlit-option-menu>=0.3.2
