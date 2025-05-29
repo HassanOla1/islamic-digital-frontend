@@ -243,25 +243,6 @@ elif selected == "ICT & Fintech":
             )
             st.plotly_chart(volume_fig, use_container_width=True)
 
-# Tab 3: AI Insights
-elif selected == "AI Insights":
-    st.header("🤖 AI-Powered Analysis")
-    user_query = st.text_input("Ask a question about the data")
-    
-    if st.button("Get AI Analysis"):
-        ai_response = requests.post(f"{BACKEND_URL}/ai_query", 
-                                  json={"question": user_query})
-        
-        if ai_response.status_code == 200:
-            ai_data = ai_response.json()
-            st.markdown("### 🤖 AI Analysis")
-            st.markdown(ai_data["answer"])
-            
-            if "result" in ai_data:
-                ai_df = pd.DataFrame(ai_data["result"])
-                st.markdown("### 📊 Query Results")
-                st.dataframe(ai_df)
-        else:
             st.error(f"AI Query Failed: {ai_response.text}")
 
 # Tab 4: Data Explorer
