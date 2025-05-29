@@ -15,14 +15,37 @@ BACKEND_URL = os.getenv("BACKEND_API_URL", "http://backend:8000")
 
 def apply_custom_theme():
     st.markdown("""
-    <style>
-    h1, h2 {
-        background: linear-gradient(90deg, #004B87, #F4B400);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+<style>
+    .stMetric {
+        background: linear-gradient(135deg, #0078D4, #228B22);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 120, 212, 0.2);
+        color: white;
     }
-    </style>
-    """, unsafe_allow_html=True)
+    .stTextInput input {
+        border-radius: 10px;
+        border: 2px solid #0078D4;
+        transition: all 0.3s ease;
+    }
+    .stTextInput input:focus {
+        border-color: #FFD700;
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3);
+    }
+    .stButton button {
+        background: linear-gradient(45deg, #0078D4, #FFD700);
+        color: white;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stButton button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 120, 212, 0.4);
+    }
+</style>
+""", unsafe_allow_html=True)
 
 apply_custom_theme()
 
