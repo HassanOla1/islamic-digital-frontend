@@ -5,6 +5,7 @@ import requests
 import pandas as pd
 import plotly.express as px
 from streamlit_option_menu import option_menu
+import time  
 
 # Set page config
 st.set_page_config(page_title="Islamic Digital Economy Dashboard", layout="wide")
@@ -26,15 +27,18 @@ def apply_custom_theme():
 apply_custom_theme()
 
 def check_backend():
-    try:
-        response = requests.get(f"{BACKEND_URL}/health", timeout=10)
-        return response.status_code == 200
-    except:
-        return False
-
-if not check_backend():
-    st.error("⚠️ Backend service not available. Please check if the backend container is running.")
-    st.stop()
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+            if response.status_code == 200:
+                return True
+            time.sleep(5)  # ✅ Wait before retrying
+        except:
+            if i < max_retries - 1:
+                time.sleep(5)  # ✅ Wait before retrying
+            continue
+    return False
 
 # Sidebar filters
 st.sidebar.image("https://via.placeholder.com/200x100?text=Islamic+Economy+Dashboard ")
